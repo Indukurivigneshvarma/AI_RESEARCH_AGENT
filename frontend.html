@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Research Agent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f4f6f8;
+        }
+        h1 {
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            font-family: monospace;
+            overflow: auto;
+        }
+        select, button {
+            padding: 8px;
+            margin-top: 10px;
+        }
+        .tabs {
+            display: flex;
+            margin-top: 20px;
+            border-bottom: 2px solid #ccc;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #ddd;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background: #ffffff;
+            border-top: 2px solid #333;
+            border-left: 2px solid #333;
+            border-right: 2px solid #333;
+        }
+        .tab-content {
+            display: none;
+            background: #ffffff;
+            padding: 20px;
+            border: 2px solid #333;
+            border-top: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🧠 AI Research Agent</h1>
+
+<label><b>Research Question</b></label>
+<textarea id="query" rows="2" placeholder="Enter a formal research question..."></textarea>
+
+<br>
+
+<label><b>Research Mode</b></label>
+<select id="mode">
+    <option value="quick">Quick</option>
+    <option value="standard" selected>Standard</option>
+    <option value="deep">Deep</option>
+</select>
+
+<br>
+<button id="runBtn" onclick="runResearch()">Run Research</button>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab(0)">🧠 Research Plan</div>
+    <div class="tab" onclick="showTab(1)">📌 Summaries</div>
+    <div class="tab" onclick="showTab(2)">🧾 Trace</div>
+    <div class="tab" onclick="showTab(3)">📄 PDF</div>
+    <div class="tab" onclick="showTab(4)">🔍 Evaluation</div>
+</div>
+
+<div class="tab-content active">
+    <textarea id="plan" rows="18"></textarea>
+</div>
+
+<div class="tab-content">
+    <textarea id="summaries" rows="25"></textarea>
+</div>
+
+<div class="tab-content">
+    <textarea id="trace" rows="40"></textarea>
+</div>
+
+<div class="tab-content">
+    <a id="pdfLink" href="#" target="_blank" style="display:none;">Download PDF</a>
+</div>
+
+<div class="tab-content">
+    <textarea id="evaluation" rows="25"></textarea>
+</div>
+
+<script>
+function showTab(index) {
+    const tabs = document.querySelectorAll(".tab");
+    const contents = document.querySelectorAll(".tab-content");
+
+    tabs.forEach((tab, i) => {
+        tab.classList.toggle("active", i === index);
+        contents[i].classList.toggle("active", i === index);
+    });
+}
+
+async function runResearch() {
+    const btn = document.getElementById("runBtn");
+    const query = document.getElementById("query").value;
+    const mode = document.getElementById("mode").value;
+
+    if (!query.trim()) {
+        alert("Please enter a research question.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Running...";
+
+    document.getElementById("plan").value = "Running research...";
+    document.getElementById("summaries").value = "";
+    document.getElementById("trace").value = "";
+    document.getElementById("evaluation").value = "";
+    document.getElementById("pdfLink").style.display = "none";
+
+    try {
+        const response = await fetch("/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query, mode })
+        });
+
+        const data = await response.json();
+
+        document.getElementById("plan").value = data.plan;
+        document.getElementById("summaries").value = data.summaries;
+        document.getElementById("trace").value = data.trace;
+        document.getElementById("evaluation").value = data.evaluation;
+
+        if (data.pdf) {
+            const link = document.getElementById("pdfLink");
+            link.href = data.pdf;
+            link.style.display = "inline";
+        }
+
+    } catch (err) {
+        alert("Error running research.");
+        console.error(err);
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Run Research";
+}
+</script>
+
+</body>
+</html>

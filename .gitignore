@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.example
+
+# Vector database (runtime memory)
+vector_data/
+
+# Generated reports
+*.pdf
+
+# Jupyter temp
+.ipynb_checkpoints/
+
+# OS junk
+.DS_Store
+Thumbs.db

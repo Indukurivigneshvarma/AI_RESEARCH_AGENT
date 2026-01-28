@@ -1,0 +1,53 @@
+name: standard_mode_evaluation
+
+description: >
+  Evaluates the AI Research Agent in Standard mode (2 discovery iterations).
+  This configuration performs one coverage refinement step after initial discovery,
+  balancing runtime and research depth.
+
+query: "Impact of generative AI on software engineering roles and workforce dynamics"
+
+mode: standard
+
+pipeline:
+  iterations: 2
+  queries_per_iteration: 2
+  coverage_refinement: 1
+
+models:
+  planning: command-a-03-2025
+  subquery_generation: llama-3.1-8b-instant
+  intent_selection: llama-3.3-70b-versatile
+  summarization_groq: llama-3.1-8b-instant
+  summarization_openrouter: meta-llama/llama-3.1-8b-instruct
+  agreement_detection: gemini-flash-latest
+  conflict_detection: gemini-flash-latest
+  report_writing: meta-llama/llama-3.1-70b-instruct
+  evaluation: meta-llama/llama-3.1-70b-instruct
+
+retrieval:
+  vector_search_top_k: 10
+  cross_encoder_top_k: 5
+  embedding_model: all-MiniLM-L6-v2
+  reranker_model: cross-encoder/ms-marco-MiniLM-L-6-v2
+
+scoring:
+  credibility_sources: data/credibility/sources.xlsx
+  credibility_authors: data/credibility/authors.xlsx
+  agreement_weights:
+    strongly_supports: 5
+    partially_supports: 3
+    independent: 1
+
+evaluation:
+  type: automated_llm_evaluation
+  metrics:
+    - overall_score
+    - accuracy
+    - completeness
+    - citation_quality
+    - structure
+
+compute:
+  hardware: cpu
+  gpu: none

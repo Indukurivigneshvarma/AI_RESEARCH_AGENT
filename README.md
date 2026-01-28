@@ -1,3 +1,13 @@
+---
+title: AI Research Agent
+emoji: 🧠
+colorFrom: green
+colorTo: white
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # 🧠 AI Research Agent
 
 An AI-powered research system that automatically performs structured research and generates academic-style reports from a user’s question.

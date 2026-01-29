@@ -25,64 +25,47 @@ The goal is not simple text generation, but the design of a reasoning pipeline t
 
 ---
 
-
 ## 2. Motivation & Relevance
 
 Modern LLM usage often treats the model as a direct answer engine. However, in real research and decision-making scenarios, reliability depends on:
 
-Consulting multiple sources
-
-Weighing source credibility
-
-Identifying agreement patterns
-
-Detecting contradictions
-
-Synthesizing findings in a structured manner
+- Consulting multiple sources  
+- Weighing source credibility  
+- Identifying agreement patterns  
+- Detecting contradictions  
+- Synthesizing findings in a structured manner  
 
 Standard prompting does not enforce these steps, which leads to:
 
-Unverified claims
-
-Hidden conflicts between sources
-
-Lack of traceability
-
-Overconfident but weakly grounded outputs
+- Unverified claims  
+- Hidden conflicts between sources  
+- Lack of traceability  
+- Overconfident but weakly grounded outputs  
 
 This project is motivated by the need for LLM systems that behave less like chatbots and more like research assistants.
 
 The AI Research Agent introduces a modular, multi-stage architecture where LLMs are used as components within a controlled pipeline rather than as a single monolithic reasoner. The system integrates:
 
-Structured research planning
-
-Web-based evidence collection
-
-Dense evidence summarization
-
-Persistent vector memory
-
-Cross-source agreement and conflict reasoning
-
-Evidence-grounded report generation
-
-Automated quality evaluation
+- Structured research planning  
+- Web-based evidence collection  
+- Dense evidence summarization  
+- Persistent vector memory  
+- Cross-source agreement and conflict reasoning  
+- Evidence-grounded report generation  
+- Automated quality evaluation  
 
 This approach is relevant to domains such as:
 
-Policy research
-
-Technical analysis
-
-Literature reviews
-
-Risk assessment
-
-Decision-support systems
+- Policy research  
+- Technical analysis  
+- Literature reviews  
+- Risk assessment  
+- Decision-support systems  
 
 where evidence grounding and reasoning transparency are more important than fluent text generation alone.
 
 ---
+
 
 ## 4. System Architecture
 

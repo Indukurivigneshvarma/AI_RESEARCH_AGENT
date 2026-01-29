@@ -1,6 +1,6 @@
 # AI Research Agent
 
-LLM-powered research automation system running via FastAPI.
+Multi model research automation system
 
 🧠 AI Research Agent
 

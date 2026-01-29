@@ -2,9 +2,7 @@
 
 Multi model research automation system
 
-🧠 AI Research Agent
-
-Employee Name: <Your Employee ID>
+Employee Name: <I Vignesh Varma>
 
 ---
 

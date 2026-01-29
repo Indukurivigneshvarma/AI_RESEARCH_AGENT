@@ -1,3 +1,13 @@
+---
+title: AI Research Agent
+emoji: 🧠
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # AI Research Agent
 
 Multi model research automation system

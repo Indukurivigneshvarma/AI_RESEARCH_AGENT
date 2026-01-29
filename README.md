@@ -66,7 +66,7 @@ where evidence grounding and reasoning transparency are more important than flue
 
 ---
 
-## 4. System Architecture
+## 3. System Architecture
 
 The AI Research Agent is designed as a **multi-stage, modular research pipeline** where Large Language Models act as controlled components within a structured reasoning system rather than as a single end-to-end generator.
 
@@ -78,7 +78,11 @@ The system mimics a disciplined research workflow:
 
 ### 🔷 High-Level Architecture Diagram
 
+
+
 ![AI Research Agent Architecture](assets/architecture.png)
+
+
 
 ---
 
@@ -96,7 +100,7 @@ Each layer is responsible for a **distinct cognitive function** in the research 
 
 ---
 
-## 4.1 Research Planning Layer
+## 3.1 Research Planning Layer
 
 This layer transforms the raw user query into a structured research scope.
 
@@ -110,7 +114,7 @@ Instead of retrieving information directly, the system first defines what aspect
 
 ---
 
-## 4.2 Iterative Discovery Engine
+## 3.2 Iterative Discovery Engine
 
 This is the core exploration loop of the system.
 
@@ -140,7 +144,7 @@ If no reusable evidence exists:
 
 ---
 
-## 4.3 Coverage Refinement Loop
+## 3.3 Coverage Refinement Loop
 
 After each discovery round, the system evaluates research coverage.
 
@@ -154,7 +158,7 @@ The LLM generates new targeted queries for missing research dimensions, enabling
 
 ---
 
-## 4.4 Cross-Source Reasoning & Validation
+## 3.4 Cross-Source Reasoning & Validation
 
 Once evidence is collected, the system performs structured evidence analysis:
 
@@ -169,7 +173,7 @@ This transforms raw summaries into **trust-weighted evidence**.
 
 ---
 
-## 4.5 Report Synthesis Engine
+## 3.5 Report Synthesis Engine
 
 The validated evidence is converted into an academic-style research report.
 
@@ -188,7 +192,7 @@ The system enforces:
 
 ---
 
-## 4.6 Evaluation Engine
+## 3.6 Evaluation Engine
 
 A plan-aware evaluation LLM assesses the report for:
 
@@ -216,42 +220,42 @@ The architecture therefore represents a **research reasoning system**, not a sin
 
 ---
 
-## 5. Models Used
+## 4. Models Used
 
-This system deliberately uses different models for different cognitive roles rather than relying on a single large model.
+This system deliberately uses different models for different cognitive roles rather than relying on a single large model.  
 Each model is chosen based on task type, reasoning requirement, latency, and cost-efficiency.
 
-System Stage	Provider	Model	Role in Pipeline	Why This Model
-Research Plan Generation	Cohere	command-a-03-2025	Produces structured research dimensions	Strong structured reasoning and decomposition capability
-Initial Subquery Generation	Groq	llama-3.1-8b-instant	Generates broad coverage search queries	Fast, cost-efficient, good semantic breadth
-Intent Selection	Groq	llama-3.3-70b-versatile	Determines whether a stored query matches current intent	Requires nuanced semantic equivalence reasoning
-Summary Generation (Provider 1)	Groq	llama-3.1-8b-instant	Produces dense factual summaries	Low latency, used for half of ingestion load
-Summary Generation (Provider 2)	OpenRouter	llama-3.1-8b-instruct	Alternate summarizer for diversity and provider balancing	Adds model variance and resilience
-Coverage Refinement	Cohere	command-a-03-2025	Identifies missing research dimensions	Good at structured gap analysis
-Agreement Detection	Google AI Studio	gemini-flash-latest	Detects cross-source support relations	Efficient pairwise reasoning over multiple texts
-Conflict Detection	Google AI Studio	gemini-flash-latest	Detects hard factual contradictions	Good instruction following for strict logical rules
-Summary Rewriting	Groq	llama-3.1-8b-instant	Removes losing claims after conflict resolution	Fast controlled rewriting
-Title & Headings Generation	Groq	llama-3.3-70b-versatile	Generates report structure	Requires high-level abstraction
-Report Writing	OpenRouter	llama-3.1-70b-instruct	Synthesizes academic report	Strong long-form synthesis and instruction adherence
-Evaluation	OpenRouter	llama-3.1-70b-instruct	Plan-aware quality assessment	Capable of multi-criteria evaluation
+| System Stage | Provider | Model | Role in Pipeline | Why This Model |
+|--------------|----------|-------|------------------|----------------|
+| Research Plan Generation | Cohere | command-a-03-2025 | Produces structured research dimensions | Strong structured reasoning and decomposition capability |
+| Initial Subquery Generation | Groq | llama-3.1-8b-instant | Generates broad coverage search queries | Fast, cost-efficient, good semantic breadth |
+| Intent Selection | Groq | llama-3.3-70b-versatile | Determines whether a stored query matches current intent | Requires nuanced semantic equivalence reasoning |
+| Summary Generation (Provider 1) | Groq | llama-3.1-8b-instant | Produces dense factual summaries | Low latency, used for half of ingestion load |
+| Summary Generation (Provider 2) | OpenRouter | llama-3.1-8b-instruct | Alternate summarizer for diversity and provider balancing | Adds model variance and resilience |
+| Coverage Refinement | Cohere | command-a-03-2025 | Identifies missing research dimensions | Good at structured gap analysis |
+| Agreement Detection | Google AI Studio | gemini-flash-latest | Detects cross-source support relations | Efficient pairwise reasoning over multiple texts |
+| Conflict Detection | Google AI Studio | gemini-flash-latest | Detects hard factual contradictions | Good instruction following for strict logical rules |
+| Summary Rewriting | Groq | llama-3.1-8b-instant | Removes losing claims after conflict resolution | Fast controlled rewriting |
+| Title & Headings Generation | Groq | llama-3.3-70b-versatile | Generates report structure | Requires high-level abstraction |
+| Report Writing | OpenRouter | llama-3.1-70b-instruct | Synthesizes academic report | Strong long-form synthesis and instruction adherence |
+| Evaluation | OpenRouter | llama-3.1-70b-instruct | Plan-aware quality assessment | Capable of multi-criteria evaluation |
 
-Model Strategy Rationale
+---
+
+
+### Model Strategy Rationale
 
 Instead of scaling model size everywhere, the system follows a specialized model orchestration approach:
 
-Small fast models → retrieval, summarization, rewriting
-
-Mid-size structured models → planning, coverage reasoning
-
-Large models → synthesis and evaluation
+- Small fast models → retrieval, summarization, rewriting  
+- Mid-size structured models → planning, coverage reasoning  
+- Large models → synthesis and evaluation  
 
 This results in:
 
-Lower latency during discovery
-
-Better cost control
-
-Task-appropriate reasoning depth
+- Lower latency during discovery  
+- Better cost control  
+- Task-appropriate reasoning depth  
 
 ---
 

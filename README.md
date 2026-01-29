@@ -66,156 +66,153 @@ where evidence grounding and reasoning transparency are more important than flue
 
 ---
 
-
 ## 4. System Architecture
 
-The AI Research Agent is designed as a multi-stage, modular research pipeline where Large Language Models act as controlled components within a structured reasoning system rather than as a single end-to-end generator.
+The AI Research Agent is designed as a **multi-stage, modular research pipeline** where Large Language Models act as controlled components within a structured reasoning system rather than as a single end-to-end generator.
 
 The system mimics a disciplined research workflow:
 
-Planning → Discovery → Evidence Validation → Synthesis → Evaluation
+> **Planning → Discovery → Evidence Validation → Synthesis → Evaluation**
 
-🔷 High-Level Architecture Diagram
+---
 
-(Insert your diagram here)
+### 🔷 High-Level Architecture Diagram
 
-🔍 Architectural Overview
+![AI Research Agent Architecture](assets/architecture-diagram.png)
 
-The system consists of five major subsystems:
+---
 
-Research Planning Layer
+## 🔍 Architectural Overview
 
-Iterative Discovery Engine
+The system consists of **five major subsystems**:
 
-Cross-Source Reasoning & Validation
+1. **Research Planning Layer**  
+2. **Iterative Discovery Engine**  
+3. **Cross-Source Reasoning & Validation**  
+4. **Report Synthesis Engine**  
+5. **Evaluation Engine**
 
-Report Synthesis Engine
+Each layer is responsible for a **distinct cognitive function** in the research process.
 
-Evaluation Engine
+---
 
-Each layer is responsible for a distinct cognitive function in the research process.
-
-### 4.1 Research Planning Layer
+## 4.1 Research Planning Layer
 
 This layer transforms the raw user query into a structured research scope.
 
-Component	Model	Function
-Research Plan Generator	Cohere command-a-03-2025	Converts the research question into high-level research dimensions
-Initial Subquery Generator	Groq llama-3.1-8b-instant	Produces broad, coverage-oriented search queries
+| Component | Model | Function |
+|-----------|-------|----------|
+| Research Plan Generator | Cohere command-a-03-2025 | Converts the research question into high-level research dimensions |
+| Initial Subquery Generator | Groq llama-3.1-8b-instant | Produces broad, coverage-oriented search queries |
 
-Purpose:
+**Purpose:**  
 Instead of retrieving information directly, the system first defines what aspects must be covered, enforcing structured reasoning from the start.
 
-### 4.2 Iterative Discovery Engine
+---
+
+## 4.2 Iterative Discovery Engine
 
 This is the core exploration loop of the system.
 
 For each subquery, the system decides whether to reuse existing knowledge or discover new information.
 
-Step A — Vector Memory Search
+### Step A — Vector Memory Search
+- Retrieves semantically similar past research queries  
+- Enables knowledge reuse and avoids redundant web searches  
 
-Retrieves semantically similar past research queries
+### Step B — Cross-Encoder Reranking
+- Improves semantic precision using a bi-encoder → cross-encoder retrieval cascade  
 
-Enables knowledge reuse and avoids redundant web searches
+### Step C — Intent Selection
+- LLM determines if any stored query matches the same research intent  
+- If yes → reuse stored summary  
+- If no → proceed to web discovery  
 
-Step B — Cross-Encoder Reranking
-
-Improves semantic precision using a bi-encoder → cross-encoder retrieval cascade
-
-Step C — Intent Selection
-
-LLM determines if any stored query matches the same research intent
-
-If yes → reuse stored summary
-
-If no → proceed to web discovery
-
-Step D — Web Discovery Pipeline
+### Step D — Web Discovery Pipeline
 
 If no reusable evidence exists:
 
-Tavily retrieves candidate sources
+- Tavily retrieves candidate sources  
+- Newspaper3k extracts metadata  
+- LLM generates dense factual summaries  
+- Credibility scoring evaluates source reliability  
+- Summary is stored in vector memory with URL-based deduplication  
 
-Newspaper3k extracts metadata
+---
 
-LLM generates dense factual summaries
-
-Credibility scoring evaluates source reliability
-
-Summary is stored in vector memory with URL-based deduplication
-
-### 4.3 Coverage Refinement Loop
+## 4.3 Coverage Refinement Loop
 
 After each discovery round, the system evaluates research coverage.
 
-Mode	Iterations
-Quick	Initial discovery only
-Standard	1 refinement loop
-Deep	2 refinement loops
+| Mode | Iterations |
+|------|------------|
+| Quick | Initial discovery only |
+| Standard | 1 refinement loop |
+| Deep | 2 refinement loops |
 
 The LLM generates new targeted queries for missing research dimensions, enabling iterative expansion of knowledge coverage.
 
-### 4.4 Cross-Source Reasoning & Validation
+---
+
+## 4.4 Cross-Source Reasoning & Validation
 
 Once evidence is collected, the system performs structured evidence analysis:
 
-Step	Purpose
-Agreement Detection	Measures cross-source support patterns
-Agreement Scoring	Assigns validation strength to summaries
-Conflict Detection	Identifies hard factual contradictions
-Conflict Resolution	Higher-scored summaries override weaker conflicting claims
+| Step | Purpose |
+|------|---------|
+| Agreement Detection | Measures cross-source support patterns |
+| Agreement Scoring | Assigns validation strength to summaries |
+| Conflict Detection | Identifies hard factual contradictions |
+| Conflict Resolution | Higher-scored summaries override weaker conflicting claims |
 
-This transforms raw summaries into trust-weighted evidence.
+This transforms raw summaries into **trust-weighted evidence**.
 
-### 4.5 Report Synthesis Engine
+---
+
+## 4.5 Report Synthesis Engine
 
 The validated evidence is converted into an academic-style research report.
 
-Component	Model	Role
-Citation Mapping	Rule-based	Connects claims to sources
-Title & Headings Generator	LLaMA 3.3 70B	Structural outline
-Report Writer	LLaMA 3.1 70B	Evidence-grounded synthesis
-PDF Generator	ReportLab	Final document output
+| Component | Model | Role |
+|-----------|-------|------|
+| Citation Mapping | Rule-based | Connects claims to sources |
+| Title & Headings Generator | LLaMA 3.3 70B | Structural outline |
+| Report Writer | LLaMA 3.1 70B | Evidence-grounded synthesis |
+| PDF Generator | ReportLab | Final document output |
 
 The system enforces:
 
-Sectioned structure
+- Sectioned structure  
+- Sentence-level citations  
+- No unsupported claims  
 
-Sentence-level citations
+---
 
-No unsupported claims
-
-### 4.6 Evaluation Engine
+## 4.6 Evaluation Engine
 
 A plan-aware evaluation LLM assesses the report for:
 
-Accuracy and grounding
-
-Coverage completeness
-
-Citation correctness
-
-Structural quality
-
-Limitations
+- Accuracy and grounding  
+- Coverage completeness  
+- Citation correctness  
+- Structural quality  
+- Limitations  
 
 This closes the loop by assessing how well the system fulfilled the research plan.
 
-🎯 Architectural Significance
+---
+
+## 🎯 Architectural Significance
 
 This system differs from standard LLM applications in that it:
 
-Uses LLMs as components, not as the system
+- Uses LLMs as components, not as the system  
+- Implements multi-source validation  
+- Enforces iterative coverage refinement  
+- Handles conflict resolution explicitly  
+- Maintains persistent research memory  
 
-Implements multi-source validation
-
-Enforces iterative coverage refinement
-
-Handles conflict resolution explicitly
-
-Maintains persistent research memory
-
-The architecture therefore represents a research reasoning system, not a single-shot generation model.
+The architecture therefore represents a **research reasoning system**, not a single-shot generation model.
 
 ---
 

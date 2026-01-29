@@ -206,7 +206,6 @@ The final report undergoes **plan-aware evaluation**.
 | Component | Model | Purpose |
 |-----------|-------|---------|
 | Plan-Aware Report Evaluation | LLaMA 3.1-70B | Scores report quality vs research plan |
-| Output | — | **Scores + Limitations** |
 
 This ensures the system is evaluated as a **research reasoning pipeline**, not a simple text generator.
 

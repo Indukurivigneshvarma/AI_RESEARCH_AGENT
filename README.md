@@ -2,7 +2,7 @@
 
 Multi model research automation system
 
-Employee Name: <I Vignesh Varma>
+Employee Name: <I. Vignesh Varma>
 
 ---
 
@@ -10,22 +10,21 @@ Employee Name: <I Vignesh Varma>
 
 Large Language Models (LLMs) can generate fluent answers to complex questions, but they do not inherently perform structured research. A single prompt typically produces responses that are:
 
-Based on limited internal knowledge
-
-Prone to hallucinations
-
-Not grounded in multiple independent sources
-
-Lacking cross-source validation or contradiction handling
+- Based on limited internal knowledge  
+- Prone to hallucinations  
+- Not grounded in multiple independent sources  
+- Lacking cross-source validation or contradiction handling  
 
 This project addresses the following core research problem:
 
-How can an AI system autonomously conduct structured, multi-source research, validate cross-source agreement, detect factual conflicts, and synthesize a grounded academic-style report with explicit evidence tracking?
+> **How can an AI system autonomously conduct structured, multi-source research, validate cross-source agreement, detect factual conflicts, and synthesize a grounded academic-style report with explicit evidence tracking?**
 
 The goal is not simple text generation, but the design of a reasoning pipeline that mimics a disciplined research process:
-planning → retrieval → summarization → evidence comparison → synthesis → evaluation.
+
+**planning → retrieval → summarization → evidence comparison → synthesis → evaluation**
 
 ---
+
 
 ## 2. Motivation & Relevance
 

@@ -21,3 +21,10 @@ vector_data/
 # OS junk
 .DS_Store
 Thumbs.db
+
+
+assets/
+*.png
+*.jpg
+*.jpeg
+*.pdf

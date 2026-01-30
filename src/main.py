@@ -73,7 +73,7 @@ def extract_research_plan(trace_text: str) -> str:
 # ==========================================================
 @app.get("/", response_class=HTMLResponse)
 def serve_ui():
-    with open(os.path.join(BASE_DIR, "frontend.html"), "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "src", "frontend.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 

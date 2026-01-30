@@ -1,13 +1,26 @@
+# src/analytics/conflict_detector.py
+
 import os
 import json
 from typing import List, Dict
 import google.generativeai as genai
 
+# Configure Gemini API
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# Fast reasoning model for logical contradiction analysis
 MODEL = "gemini-flash-latest"
 
 
 def _clean_llm_json(text: str) -> str:
+    """
+    Cleans LLM output so it can be safely parsed as JSON.
+
+    Handles:
+    • Markdown code fences
+    • Leading 'json' tokens
+    • Extraneous text before JSON object
+    """
     if not text:
         return ""
     text = text.strip()
@@ -26,15 +39,53 @@ def _clean_llm_json(text: str) -> str:
 def detect_conflicts(
     summaries: List[Dict[str, str]],
 ) -> Dict:
+    """
+    HARD FACTUAL CONFLICT DETECTOR
+    ==============================
 
+    Identifies logical contradictions between summaries.
+
+    This is stricter than disagreement detection.
+    A conflict is flagged ONLY when:
+        • The claims refer to the same phenomenon
+        • They cannot both be true simultaneously
+
+    This ensures:
+        • No false conflicts due to framing differences
+        • No conflicts from complementary claims
+        • No conflicts from missing information
+
+    Parameters
+    ----------
+    summaries : List[Dict]
+        Each summary contains:
+            "id"
+            "summary"
+
+    Returns
+    -------
+    {
+      "conflicts": [
+        {
+          "ids": ["S1", "S2"],
+          "claim_a": "...",
+          "claim_b": "..."
+        }
+      ]
+    }
+    """
+
+    # Not enough summaries to compare
     if len(summaries) < 2:
         return {"conflicts": []}
 
+    # Build comparison block for model
     block = "\n\n".join(
         f"{s['id']}:\n{s['summary']}"
         for s in summaries
     )
 
+    # Prompt enforces strict logical contradiction criteria
     prompt = f"""
 You are detecting HARD FACTUAL CONTRADICTIONS between research summaries.
 
@@ -94,12 +145,14 @@ SUMMARIES:
 {block}
 """.strip()
 
+    # Call Gemini model
     model = genai.GenerativeModel(MODEL)
     response = model.generate_content(prompt)
 
     raw = response.text or ""
     cleaned = _clean_llm_json(raw)
 
+    # Parse JSON response
     try:
         return json.loads(cleaned)
     except Exception as e:

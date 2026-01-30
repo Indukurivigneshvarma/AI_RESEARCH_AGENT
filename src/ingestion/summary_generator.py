@@ -1,13 +1,18 @@
+# src/ingestion/summary_generator.py
+
 import os
 from groq import Groq
 from openai import OpenAI
-from src.config import MAX_SUMMARY_TOKENS   # ✅ fixed import path
+from src.config import MAX_SUMMARY_TOKENS   # Token cap for summaries
 
+# Models used for summarization
 GROQ_MODEL = "llama-3.1-8b-instant"
 OR_MODEL   = "meta-llama/llama-3.1-8b-instruct"
 
+# Primary fast summarization provider
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
+# Secondary provider for load balancing and diversity
 or_client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
     base_url="https://openrouter.ai/api/v1",
@@ -18,9 +23,41 @@ def generate_summary(
     raw_text: str,
     provider: str = "groq",
 ) -> str:
+    """
+    EVIDENCE-DENSE SUMMARY GENERATOR
+    ================================
+
+    Converts raw web text into a structured, factual summary.
+
+    This function is designed to:
+        • Maximize factual recall
+        • Minimize hallucination
+        • Preserve quantitative data
+        • Produce report-ready text
+
+    Two providers are used to:
+        - Distribute API load
+        - Reduce single-provider dependency
+        - Introduce minor model variance
+
+    Parameters
+    ----------
+    raw_text : str
+        Extracted content from a source webpage.
+
+    provider : str
+        "groq" or "openrouter"
+        Determines which LLM backend is used.
+
+    Returns
+    -------
+    str
+        A single-paragraph evidence summary.
+    """
 
     provider = provider.lower().strip()
 
+    # Highly constrained prompt to enforce factual extraction behavior
     prompt = f"""
 Write ONLY the summary text.
 
@@ -51,15 +88,17 @@ TEXT:
 {raw_text}
 """.strip()
 
+    # Use OpenRouter if selected
     if provider == "openrouter":
         r = or_client.chat.completions.create(
             model=OR_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
+            temperature=0.2,  # Low creativity, high factuality
             max_tokens=MAX_SUMMARY_TOKENS
         )
         return r.choices[0].message.content.strip()
 
+    # Default provider: Groq
     r = groq_client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}],

@@ -6,9 +6,47 @@ from reportlab.lib.units import inch
 
 
 def generate_pdf(report_text: str, output_path: str = "report.pdf") -> str:
+    """
+    PDF GENERATION MODULE
+    =====================
+
+    Purpose
+    -------
+    Converts the structured report text (produced by the LLM writer)
+    into a formatted PDF document using ReportLab.
+
+    The report text follows a strict marker-based structure:
+        @@TITLE@@
+        Title Text
+        @@TITLE@@
+
+        @@Section Name@@
+        Paragraph text...
+
+    This function interprets those markers and applies
+    appropriate visual styles.
+
+    Inputs
+    ------
+    report_text : str
+        Fully formatted report text with structural markers.
+
+    output_path : str
+        Output file path for the generated PDF.
+
+    Returns
+    -------
+    str : Path to the generated PDF file.
+    """
+
+    # --------------------------------------------------
+    # Style Definitions
+    # --------------------------------------------------
+    # These styles control typography and layout of the report.
 
     styles = getSampleStyleSheet()
 
+    # Title style (centered, large, bold)
     styles.add(ParagraphStyle(
         name="TitleStyle",
         fontSize=18,
@@ -19,6 +57,7 @@ def generate_pdf(report_text: str, output_path: str = "report.pdf") -> str:
         fontName="Helvetica-Bold",
     ))
 
+    # Section heading style
     styles.add(ParagraphStyle(
         name="SectionHeader",
         fontSize=13,
@@ -28,6 +67,7 @@ def generate_pdf(report_text: str, output_path: str = "report.pdf") -> str:
         fontName="Helvetica-Bold",
     ))
 
+    # Body paragraph style
     styles.add(ParagraphStyle(
         name="ReportBody",
         fontSize=11,
@@ -35,6 +75,11 @@ def generate_pdf(report_text: str, output_path: str = "report.pdf") -> str:
         spaceBefore=6,
         spaceAfter=6,
     ))
+
+    # --------------------------------------------------
+    # Document Setup
+    # --------------------------------------------------
+    # Defines page size and margins.
 
     doc = SimpleDocTemplate(
         output_path,
@@ -45,25 +90,34 @@ def generate_pdf(report_text: str, output_path: str = "report.pdf") -> str:
         bottomMargin=1 * inch,
     )
 
-    story = []
+    story = []  # Holds the flowable elements (paragraphs, spacers)
+
     lines = report_text.splitlines()
     i = 0
+
+    # --------------------------------------------------
+    # Parse Structured Report Text
+    # --------------------------------------------------
+    # The loop walks line-by-line and interprets markers.
 
     while i < len(lines):
         line = lines[i].strip()
 
+        # Blank line → vertical spacing
         if not line:
             story.append(Spacer(1, 12))
             i += 1
             continue
 
+        # Title block handling
         if line == "@@TITLE@@":
             title_text = lines[i + 1].strip()
             story.append(Paragraph(title_text, styles["TitleStyle"]))
             story.append(Spacer(1, 24))
-            i += 3
+            i += 3  # Skip closing @@TITLE@@
             continue
 
+        # Section header handling
         if line.startswith("@@") and line.endswith("@@"):
             heading = line.strip("@")
             story.append(Paragraph(heading, styles["SectionHeader"]))
@@ -71,8 +125,13 @@ def generate_pdf(report_text: str, output_path: str = "report.pdf") -> str:
             i += 1
             continue
 
+        # Normal paragraph text
         story.append(Paragraph(line, styles["ReportBody"]))
         i += 1
 
+    # --------------------------------------------------
+    # Build PDF
+    # --------------------------------------------------
     doc.build(story)
+
     return output_path

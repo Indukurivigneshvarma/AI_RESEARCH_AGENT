@@ -80,7 +80,6 @@ The system follows a disciplined research workflow:
 ### 🔷 High-Level Architecture Diagram
 
 ![AI Research Agent Architecture](assets/architecture.png)
->>>>>>> 3d72f39e126d7a65c6ec5d3a1d55cb113cb3d2c3
 
 ---
 

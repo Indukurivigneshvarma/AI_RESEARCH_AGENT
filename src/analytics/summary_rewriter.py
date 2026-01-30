@@ -1,3 +1,5 @@
+# src/analytics/summary_rewriter.py
+
 import os
 import json
 from typing import Dict
@@ -21,18 +23,21 @@ def rewrite_summaries(
     SUMMARY REWRITING MODULE
     =========================
 
-    Purpose
-    -------
-    After conflict detection + resolution, certain claims are marked
-    for removal from specific summaries. This function asks an LLM to
-    carefully rewrite those summaries without the flagged claims.
+    This stage executes *surgical evidence correction*.
 
-    The system does NOT delete text directly because:
-    - Claims may be embedded in sentences
-    - Context may need light rephrasing
-    - Removing text blindly can break coherence
+    Instead of deleting entire summaries when conflicts occur,
+    only the specific losing claims are removed while keeping
+    the rest of the evidence intact.
 
-    So we use a controlled LLM rewrite.
+    Why an LLM is used:
+        • Claims may be embedded in complex sentences
+        • Direct string deletion can break grammar or meaning
+        • Minor rephrasing may be required
+
+    This ensures:
+        - Evidence integrity
+        - Logical consistency
+        - Minimal information loss
 
     rewrite_plan format:
     {
@@ -53,7 +58,7 @@ def rewrite_summaries(
     }
     """
 
-    # If no summaries need rewriting, return empty result
+    # No rewrite needed → return empty
     if not rewrite_plan:
         return {}
 
@@ -81,6 +86,8 @@ CLAIMS TO REMOVE:
     # --------------------------------------------------
     # LLM Prompt Design
     # --------------------------------------------------
+    # Prompt strictly forbids summarization, addition, or explanation.
+    # The model acts like an editor, not a generator.
 
     prompt = f"""
 You are editing research summaries.
@@ -116,7 +123,7 @@ SUMMARIES:
     response = client.chat.completions.create(
         model=MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
+        temperature=0.0,   # Deterministic editing
         max_tokens=2000,
     )
 

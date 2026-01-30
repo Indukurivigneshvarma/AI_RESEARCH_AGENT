@@ -2,9 +2,14 @@ from typing import List, Dict
 import time
 import json
 
-# -----------------------------
-# System Configuration
-# -----------------------------
+# ==========================================================
+# SYSTEM CONFIGURATION
+# These constants define global system behavior such as:
+# - Minimum article length required for summarization
+# - Maximum text allowed to avoid LLM overload
+# - Retrieval depth parameters
+# - Research modes (quick / standard / deep)
+# ==========================================================
 from src.config import (
     MIN_RAW_CHARS,
     MAX_RAW_CHARS,
@@ -13,31 +18,46 @@ from src.config import (
     CROSS_TOP_K,
 )
 
-# -----------------------------
-# Query Intelligence
-# -----------------------------
+# ==========================================================
+# QUERY INTELLIGENCE
+# This layer turns a user question into structured research
+# steps. It handles:
+# 1) Planning research dimensions
+# 2) Creating search queries
+# 3) Refining queries after each discovery loop
+# ==========================================================
 from src.query.subqueries import generate_initial_subqueries
 from src.query.intent_selector import select_best_intents
 from src.query.research_plan import generate_research_plan
 from src.query.coverage_refiner import refine_queries
 
-# -----------------------------
-# Retrieval Layer
-# -----------------------------
+# ==========================================================
+# RETRIEVAL LAYER
+# Responsible for collecting evidence from two sources:
+# - Persistent memory (vector database)
+# - Live web search
+# ==========================================================
 from src.retrieval.web_search import search_web
 from src.retrieval.tavily_client import tavily_extract
 from src.retrieval.vector_search import VectorSearcher
 from src.retrieval.cross_encoder import CrossEncoderReranker
 
-# -----------------------------
-# Ingestion
-# -----------------------------
+# ==========================================================
+# INGESTION
+# Converts raw web articles into structured factual summaries
+# and extracts metadata such as author and publication date.
+# ==========================================================
 from src.ingestion.metadata_extractor import extract_metadata
 from src.ingestion.summary_generator import generate_summary
 
-# -----------------------------
-# Scoring & Analytics
-# -----------------------------
+# ==========================================================
+# SCORING & ANALYTICS
+# These modules evaluate evidence quality and cross-source
+# relationships:
+# - Credibility scoring
+# - Agreement detection
+# - Conflict detection and resolution
+# ==========================================================
 from src.scoring.summary_scorer import compute_summary_score
 from src.scoring.agreement_scorer import compute_agreement_scores
 from src.analytics.agreement_detector import detect_agreements
@@ -45,33 +65,41 @@ from src.analytics.conflict_detector import detect_conflicts
 from src.analytics.conflict_resolver import resolve_conflicts
 from src.analytics.summary_rewriter import rewrite_summaries
 
-# -----------------------------
-# Vector Store
-# -----------------------------
+# ==========================================================
+# VECTOR STORE
+# Stores summaries in memory so future research can reuse them
+# without repeating web searches.
+# ==========================================================
 from src.vector_store.upsert import upsert_summaries
 
-# -----------------------------
-# Report Generation
-# -----------------------------
+# ==========================================================
+# REPORT GENERATION
+# Converts validated summaries into a structured academic-style
+# report with headings, citations, and exports to PDF.
+# ==========================================================
 from src.report.citations import build_references
 from src.report.headings import generate_title_and_headings
 from src.report.writer import write_report
 from src.report.pdf_generator import generate_pdf
 
-# -----------------------------
-# Utilities & Trace
-# -----------------------------
+# ==========================================================
+# UTILITIES & TRACE
+# Handles date normalization and full trace logging so the
+# system remains transparent and auditable.
+# ==========================================================
 from src.utils.dates import normalize_date, today_iso
 from src.trace.research_trace import ResearchTrace
 
-# -----------------------------
-# Embeddings
-# -----------------------------
+# ==========================================================
+# EMBEDDING MODEL
+# Converts text into semantic vectors for similarity search.
+# ==========================================================
 from sentence_transformers import SentenceTransformer
 
-# -----------------------------
-# Evaluation
-# -----------------------------
+# ==========================================================
+# EVALUATION
+# Performs automated quality assessment of the final report.
+# ==========================================================
 from src.evaluation.report_evaluator import evaluate_report
 
 
@@ -83,49 +111,40 @@ def run_pipeline(
     trace: ResearchTrace,
 ):
     """
-    Executes the complete research pipeline.
+    CENTRAL CONTROLLER OF THE AI RESEARCH AGENT
 
-    Parameters
-    ----------
-    user_query : str
-        The research question from the user.
+    This function coordinates all subsystems and executes
+    a disciplined research workflow that mimics human research:
 
-    mode : str
-        Controls iteration depth:
-        quick | standard | deep
+        Plan → Discover → Validate → Synthesize → Evaluate
 
-    vector_client
-        Persistent FAISS vector store for summary reuse.
-
-    trace : ResearchTrace
-        Logging object used to record every step.
-
-    Returns
-    -------
-    summaries : List[Dict]
-    trace_text : str
-    report_text : str
-    pdf_path : str
-    evaluation : Dict
+    Returns all outputs needed by the UI:
+    - Collected summaries
+    - Full trace log
+    - Final report text
+    - Generated PDF path
+    - Automated evaluation
     """
 
-    # -----------------------------
-    # Runtime state
-    # -----------------------------
-    summaries: List[Dict] = []        # Collected evidence summaries
-    provider_toggle = 0               # Alternates summarization LLM providers
-    seen_urls = set()                 # Prevents duplicate source usage
+    # Container storing all collected evidence summaries
+    summaries: List[Dict] = []
 
-    # -----------------------------
-    # Models for retrieval
-    # -----------------------------
+    # Used to alternate between summarization providers for load balancing
+    provider_toggle = 0
+
+    # Tracks already-used URLs to avoid duplicate evidence
+    seen_urls = set()
+
+    # Load semantic embedding model (MiniLM)
     embedder = SentenceTransformer("all-MiniLM-L6-v2")
+
+    # Initialize vector search (memory retrieval)
     vector_searcher = VectorSearcher(vector_client)
+
+    # Initialize cross-encoder reranker for precision ranking
     cross_encoder = CrossEncoderReranker()
 
-    # -----------------------------
-    # Mode configuration
-    # -----------------------------
+    # Load configuration for selected research mode
     mode_cfg = MODES.get(mode)
     if not mode_cfg:
         raise ValueError(f"Unknown mode: {mode}")
@@ -133,9 +152,10 @@ def run_pipeline(
     max_iterations = mode_cfg["iterations"]
     queries_per_iteration = mode_cfg["queries_per_iteration"]
 
-    # ==========================================================
-    # STAGE 0 — RESEARCH PLAN (CONCEPTUAL SCOPE)
-    # ==========================================================
+    # ======================================================
+    # STAGE 0 — RESEARCH PLANNING
+    # Converts user question into research goal + dimensions.
+    # ======================================================
     research_plan = generate_research_plan(user_query)
 
     trace.log_research_plan(
@@ -146,14 +166,13 @@ def run_pipeline(
     sid_counter = 1
     current_queries: List[str] = []
 
-    # ==========================================================
-    # STAGE 1 — ITERATIVE DISCOVERY
-    # ==========================================================
+    # ======================================================
+    # STAGE 1 — ITERATIVE DISCOVERY LOOP
+    # Each loop improves research coverage.
+    # ======================================================
     for iteration in range(1, max_iterations + 1):
 
-        # -----------------------------
-        # Query generation
-        # -----------------------------
+        # First iteration: broad exploratory queries
         if iteration == 1:
             current_queries = generate_initial_subqueries(
                 user_query=user_query,
@@ -162,6 +181,7 @@ def run_pipeline(
                 n_queries=queries_per_iteration,
             )
         else:
+            # Later iterations: fill missing dimensions
             summary_map = {s["id"]: s["summary"] for s in summaries}
             current_queries = refine_queries(
                 research_plan=research_plan,
@@ -173,18 +193,16 @@ def run_pipeline(
         trace.log_iteration_start(iteration, current_queries)
 
         subq_map = {f"Q{idx+1}": q for idx, q in enumerate(current_queries)}
-
         retrieved_candidates: Dict[str, Dict[str, Dict]] = {}
 
-        # -----------------------------
-        # Vector search + reranking
-        # -----------------------------
+        # ---------------- MEMORY SEARCH ----------------
         for qkey, qtext in subq_map.items():
             query_embedding = embedder.encode(qtext).tolist()
 
+            # Search vector DB for similar past research
             hits = vector_searcher.search(query_embedding, VECTOR_TOP_K)
 
-            # URL de-duplication at vector level
+            # Remove already-used URLs
             filtered_hits = []
             for h in hits:
                 url = h.get("url")
@@ -205,6 +223,7 @@ def run_pipeline(
                 retrieved={vs_id: data["query_text"] for vs_id, data in vs_map.items()},
             )
 
+            # Rerank for semantic precision
             reranked = cross_encoder.rerank(
                 query=qtext,
                 candidates=[{"vs_id": vs_id, **data} for vs_id, data in vs_map.items()],
@@ -220,9 +239,8 @@ def run_pipeline(
 
             retrieved_candidates[qkey] = reranked_map
 
-        # -----------------------------
-        # Intent selection
-        # -----------------------------
+        # ---------------- INTENT MATCHING ----------------
+        # Decide if memory summaries can answer the question
         candidates_for_llm = {
             qkey: {vs_id: data["query_text"] for vs_id, data in cands.items()}
             for qkey, cands in retrieved_candidates.items()
@@ -236,13 +254,11 @@ def run_pipeline(
 
         trace.log_intent_selection(selected_intents)
 
-        # -----------------------------
-        # Reuse OR Web Ingestion
-        # -----------------------------
+        # ---------------- REUSE OR WEB SEARCH ----------------
         for qkey, qtext in subq_map.items():
             vs_id = selected_intents.get(qkey)
 
-            # VECTOR REUSE
+            # Reuse memory summary if suitable
             if vs_id and qkey in retrieved_candidates:
                 record = retrieved_candidates[qkey].get(vs_id)
                 url = record.get("url") if record else None
@@ -257,11 +273,11 @@ def run_pipeline(
                     trace.log_intent_reuse(r["id"], url)
                     continue
 
-            # WEB INGESTION
+            # Otherwise perform live web search
             trace.log_web_ingestion_start(qkey, qtext)
             results = search_web(qtext, max_results=3)
 
-            for idx, r in enumerate(results, 1):
+            for r in results:
                 url = r.get("url")
                 if not url or url in seen_urls:
                     continue
@@ -305,9 +321,9 @@ def run_pipeline(
 
         trace.log_iteration_end(iteration)
 
-    # ==========================================================
-    # STAGE 2 — AGREEMENT, CONFLICTS, REWRITING
-    # ==========================================================
+    # ======================================================
+    # STAGE 2 — AGREEMENT & CONFLICT ANALYSIS
+    # ======================================================
     if len(summaries) < 2:
         trace.log_pipeline_complete()
         return summaries, trace.render(), None, None, None
@@ -340,9 +356,9 @@ def run_pipeline(
             if s["id"] in rewritten:
                 s["summary"] = rewritten[s["id"]]
 
-    # ==========================================================
+    # ======================================================
     # STAGE 3 — REPORT GENERATION
-    # ==========================================================
+    # ======================================================
     references = build_references(summaries)
     title_headings = generate_title_and_headings(user_query, [s["summary"] for s in summaries])
 
@@ -356,9 +372,9 @@ def run_pipeline(
     pdf_path = generate_pdf(report_text, f"report_{int(time.time())}.pdf")
     trace.log_report_generation(pdf_path)
 
-    # ==========================================================
-    # STAGE 4 — SELF EVALUATION
-    # ==========================================================
+    # ======================================================
+    # STAGE 4 — AUTOMATED EVALUATION
+    # ======================================================
     evaluation = evaluate_report(
         user_query=user_query,
         research_plan=research_plan,

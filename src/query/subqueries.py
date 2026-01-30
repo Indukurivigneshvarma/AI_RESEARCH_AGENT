@@ -4,7 +4,10 @@ import os
 from typing import List
 from groq import Groq
 
+# Groq client used for fast, low-latency query generation
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+# Small fast model suitable for breadth-oriented search query generation
 MODEL = "llama-3.1-8b-instant"
 
 
@@ -14,9 +17,44 @@ def generate_initial_subqueries(
     dimensions: List[str],
     n_queries: int = 2,
 ) -> List[str]:
+    """
+    INITIAL QUERY GENERATION
+    =========================
 
+    This function generates the *first wave* of search queries
+    before any evidence is collected.
+
+    Goal:
+        Provide broad coverage of the research space while staying
+        strictly within the defined research scope.
+
+    Unlike coverage refinement, this stage focuses on exploration,
+    not gap-filling.
+
+    Parameters
+    ----------
+    user_query : str
+        Original user question.
+
+    research_goal : str
+        Normalized goal produced by the research planning stage.
+
+    dimensions : List[str]
+        Conceptual dimensions that define coverage areas.
+
+    n_queries : int
+        Number of initial search queries to generate.
+
+    Returns
+    -------
+    List[str]
+        Initial search queries used to begin web discovery.
+    """
+
+    # Convert dimensions to bullet list for prompt clarity
     dim_block = "\n".join(f"- {d}" for d in dimensions)
 
+    # Prompt engineered to prevent scope drift and hallucinated expansion
     prompt = f"""
 You are generating INITIAL SEARCH QUERIES for academic research.
 
@@ -47,21 +85,24 @@ OUTPUT:
 Exactly {n_queries} lines, each a search query.
 """.strip()
 
+    # Call LLM to produce initial queries
     response = client.chat.completions.create(
         model=MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
+        temperature=0.3,  # Slight creativity, still controlled
         max_tokens=300,
     )
 
     text = response.choices[0].message.content.strip()
 
+    # Normalize output lines
     queries = [
         line.strip()
         for line in text.split("\n")
         if line.strip()
     ]
 
+    # Safety check ensures deterministic pipeline behavior
     if len(queries) < n_queries:
         raise ValueError(
             f"Expected {n_queries} initial sub-queries, got {len(queries)}"
